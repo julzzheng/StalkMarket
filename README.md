@@ -17,5 +17,5 @@ Parameters:
 3. ``user``: name of the person to track the current price for, e.g. james
 
 ``
-python src/track.py --price 46 --time mon_am --user james
+python src/track.py --price=46 --time=mon_am --user=james
 ``
