@@ -1,2 +1,2 @@
-# StalkMarket
-Animal Crossing: New Horizons Stalk Market Tracker
+# Stalk Market
+ACNH Stalk Market Tracker
