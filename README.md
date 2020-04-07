@@ -19,3 +19,20 @@ Parameters:
 ``
 python src/track.py --price=46 --time=mon_am --user=james
 ``
+
+## Run Prediction:
+
+Parameters:
+1. ``new_model``: whether a new model should be trained or not (optional)
+
+``
+python src/predict.py --new_model=True
+``
+
+## Generate training data:
+
+
+``
+python src/generate.py
+``
+
