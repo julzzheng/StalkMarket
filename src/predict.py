@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV, train_test_split, cross_val_score
+from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
+from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from argparse import ArgumentParser
 import datetime
 import os
@@ -11,20 +11,22 @@ import pickle
 
 stalk_time = ['mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm', 'fri_am',
               'fri_pm', 'sat_am', 'sat_pm']
-
-pattern = ['Random', 'Decreasing', 'Small Spike', 'Camel Hump']
+pattern = ['Random', 'Decreasing', 'Small Spike', 'Large Spike']
 
 
 def hyperparameter_optimization(x, y):
     pipeline = Pipeline([
-        ('clf', OneVsRestClassifier(KNeighborsClassifier()))
+        # ('select', SelectKBest()),
+        ('clf', KNeighborsClassifier())
     ])
     parameters = {
-        'clf__estimator__n_neighbors': np.arange(1, 31, 2),
-        'clf__estimator__weights': ['uniform', 'distance'],
-        'clf__estimator__algorithm': ['auto'],
-        'clf__estimator__leaf_size': np.arange(5, 101, 1),
-        'clf__estimator__p': [1, 2],
+        'clf__n_neighbors': np.arange(1, 21, 2),
+        'clf__weights': ['uniform', 'distance'],
+        'clf__algorithm': ['auto'],
+        'clf__leaf_size': np.arange(5, 35, 1),
+        'clf__p': [1, 2],
+        # 'select__score_func': [chi2],
+        # 'select__k': ['all'],
     }
     stratified_fold = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
 
@@ -38,28 +40,6 @@ def hyperparameter_optimization(x, y):
         print("\t%s: %r" % (param_name, best_parameters[param_name]))
 
     return random_fit.best_estimator_
-
-
-def nested_cv_evaluation(x, y):
-    pipeline = Pipeline([
-        ('clf', OneVsRestClassifier(KNeighborsClassifier()))
-    ])
-    parameters = {
-        'clf__estimator__n_neighbors': np.arange(1, 31, 2),
-        'clf__estimator__weights': ['uniform', 'distance'],
-        'clf__estimator__algorithm': ['auto'],
-        'clf__estimator__leaf_size': np.arange(5, 101, 1),
-        'clf__estimator__p': [1, 2],
-    }
-
-    outer_fold = StratifiedKFold(n_splits=3, shuffle=True, random_state=1)
-    inner_fold = StratifiedKFold(n_splits=10, shuffle=True, random_state=2)
-
-    random_search = RandomizedSearchCV(pipeline, parameters, scoring='balanced_accuracy', cv=inner_fold, n_jobs=-1,
-                                       verbose=1)
-    nested_score = cross_val_score(random_search, x, y, scoring='balanced_accuracy', cv=outer_fold,
-                                   n_jobs=-1, verbose=1)
-    return nested_score.mean()
 
 
 def make_prediction(p, m):
@@ -124,7 +104,8 @@ if __name__ == '__main__':
     if new_model:
         X_train, y_train = prepare_data(prices_samples_path, patterns_samples_path)
         model = hyperparameter_optimization(X_train, y_train)
-        os.mkdir('model/');
+        if not os.path.exists('model'):
+            os.makedirs('model')
         pickle.dump(model, open('model/estimator.pkl', 'wb'))
     else:
         model = pickle.load(open('model/estimator.pkl', 'rb'))
