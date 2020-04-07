@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 
 stalk_time = ['mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm', 'fri_am', 'fri_pm',
               'sat_am', 'sat_pm']
+markers = ['s', 'o', 'v', '^', 'v', '.', 'p', '*', 'h', 'D']
 
 
 def track_stalk(path, price, time, user):
@@ -33,14 +34,11 @@ def plot_prices(path):
     data = pd.read_csv(path)
     current_week = datetime.date.today().isocalendar()[1]
 
-    users = data.user.unique().tolist()
+    entries = data[data.week == current_week]
+    users = entries.user.unique().tolist()
 
     for i in users:
-        user_entries = data[data.user == i]
-        user_entries = user_entries[user_entries.week == current_week]
-
-        markers = ['s', 'o', 'v', '^', 'v', '.', 'p', '*', 'h', 'D']
-
+        user_entries = entries[entries.user == i]
         plt.plot(user_entries.time.tolist(), user_entries.price.tolist(), lw=2, label='{}'.format(i),
                  marker=markers[users.index(i)])
 
@@ -63,6 +61,6 @@ if __name__ == '__main__':
     parser.add_argument("--user", required=True, type=str, help="for whom the price should be tracked")
     args = parser.parse_args()
 
-    csv_path = 'data/stalk_prices.csv'
-    track_stalk(csv_path, args.price, args.time, args.user)
-    plot_prices(csv_path)
+    prices_path = 'data/stalk_prices.csv'
+    track_stalk(prices_path, args.price, args.time, args.user)
+    plot_prices(prices_path)
