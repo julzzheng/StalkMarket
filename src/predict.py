@@ -12,7 +12,7 @@ import pickle
 stalk_time = ['mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm', 'fri_am',
               'fri_pm', 'sat_am', 'sat_pm']
 
-pattern = ['Ramdom', 'Decreasing', 'Small Spike', 'Camel Hump']
+pattern = ['Random', 'Decreasing', 'Small Spike', 'Camel Hump']
 
 
 def hyperparameter_optimization(x, y):
@@ -77,7 +77,10 @@ def make_prediction(p, m):
         for time in user_entries.time.unique():
             current_entry = user_entries[user_entries.time == time]
             features.loc[0, [stalk_time[time]]] = current_entry.price.values[0]
-        features = features.fillna(0)
+
+        features = features.transpose().fillna(method='ffill')
+        features = features.fillna(method='backfill').transpose()
+
         print('The prediction for %s is the %s pattern.' % (i, pattern[int(m.predict(features)[0])]))
 
 
@@ -100,7 +103,7 @@ def prepare_data(pr, pat):
 
             df_prices = df_prices.append(features, ignore_index=True)
 
-    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(method='backfill')
+    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(method='ffill')
     del data['user'], data['week'], data['prices']
 
     return np.split(data, [12], axis=1)
