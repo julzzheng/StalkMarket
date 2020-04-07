@@ -8,7 +8,9 @@ However, based on the [reddit post](https://www.reddit.com/r/AnimalCrossing/comm
 
 Furthermore, the twitter user [@KnightCarmine](https://twitter.com/KnightCarmine) illustrated in his [tweet](https://twitter.com/KnightCarmine/status/1244392945056276482) how the price development for the Stalk Market could look like.
 
-<img src="https://pbs.twimg.com/media/EUT4ZTWVAAA7S9V?format=jpg" width="450"><img src="https://pbs.twimg.com/media/EUT4aS1UEAAz73u?format=jpg" height="674">
+<div style="text-align:center"><img src="https://pbs.twimg.com/media/EUT4ZTWVAAA7S9V?format=jpg" width="450">
+<img src="https://pbs.twimg.com/media/EUT4aS1UEAAz73u?format=jpg" width="450"></div>
+
 
 ## Getting Started
 
