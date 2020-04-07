@@ -2,6 +2,7 @@ import pandas as pd
 import random
 import os
 from nltk.corpus import names
+from argparse import ArgumentParser
 
 user_names = [name.lower() for name in names.words()]
 
@@ -91,6 +92,11 @@ def generate_camel_hump_sample(week, sunday_price, prices, patterns):
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument("--n_samples", required=False, type=int,
+                        help="how many samples per pattern should be generated", default=1000)
+    args = parser.parse_args()
+
     prices_path = 'data/stalk_prices_samples.csv'
     patterns_path = 'data/stalk_patterns_samples.csv'
     if not os.path.exists(prices_path):
@@ -103,7 +109,7 @@ if __name__ == '__main__':
     df_prices = pd.DataFrame(columns=['week', 'time', 'user', 'price'])
     df_patterns = file = pd.DataFrame(columns=['week', 'user', 'class'])
 
-    for i in range(1000):
+    for i in range(args.n_samples):
         sun = random.randrange(90, 111)
         df_prices, df_patterns = generate_random_sample(i, sun, df_prices, df_patterns)
         df_prices, df_patterns = generate_decreasing_sample(i, sun, df_prices, df_patterns)
