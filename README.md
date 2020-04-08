@@ -10,7 +10,8 @@ Furthermore, the twitter user [@KnightCarmine](https://twitter.com/KnightCarmine
 
 Lastly, in [@_Ninji](https://twitter.com/_Ninji)'s tweet he showed in his [findings](https://twitter.com/_Ninji/status/1244818665851289602) the code responsible for the turnip prices.
 
-<img src="https://pbs.twimg.com/media/EUT4ZTWVAAA7S9V?format=jpg" width="450"><img src="https://pbs.twimg.com/media/EUT4aS1UEAAz73u?format=jpg" height="674">
+<div style="text-align:center"><img src="https://pbs.twimg.com/media/EUT4ZTWVAAA7S9V?format=jpg" width="450">
+<img src="https://pbs.twimg.com/media/EUT4aS1UEAAz73u?format=jpg" width="450"></div>
 
 ## Getting Started
 
