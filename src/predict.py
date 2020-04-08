@@ -16,8 +16,8 @@ pattern = ['Random', 'Decreasing', 'Small Spike', 'Large Spike']
 
 def hyperparameter_optimization(x, y):
     pipeline = Pipeline([
-        # ('select', SelectKBest()),
-        ('clf', KNeighborsClassifier())
+        ('select', SelectKBest()),
+        ('clf', KNeighborsClassifier()),
     ])
     parameters = {
         'clf__n_neighbors': np.arange(1, 21, 2),
@@ -25,8 +25,9 @@ def hyperparameter_optimization(x, y):
         'clf__algorithm': ['auto'],
         'clf__leaf_size': np.arange(5, 35, 1),
         'clf__p': [1, 2],
-        # 'select__score_func': [chi2],
-        # 'select__k': ['all'],
+        'clf__p': [1, 2],
+        'select__score_func': [chi2],
+        'select__k': ['all'],
     }
     stratified_fold = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
 
@@ -57,9 +58,7 @@ def make_prediction(p, m):
         for time in user_entries.time.unique():
             current_entry = user_entries[user_entries.time == time]
             features.loc[0, [stalk_time[time]]] = current_entry.price.values[0]
-
-        features = features.transpose().fillna(method='ffill')
-        features = features.fillna(method='backfill').transpose()
+        features = features.fillna(-1)
 
         print('The prediction for %s is the %s pattern.' % (i, pattern[int(m.predict(features)[0])]))
 
@@ -83,7 +82,7 @@ def prepare_data(pr, pat):
 
             df_prices = df_prices.append(features, ignore_index=True)
 
-    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(method='ffill')
+    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(method='backfill')
     del data['user'], data['week'], data['prices']
 
     return np.split(data, [12], axis=1)
