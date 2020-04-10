@@ -2,16 +2,19 @@ import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from argparse import ArgumentParser
 import datetime
 import os
 import pickle
+import random
 
 stalk_time = ['mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm', 'fri_am',
               'fri_pm', 'sat_am', 'sat_pm']
-pattern = ['Random', 'Decreasing', 'Small Spike', 'Large Spike']
+# pattern = ['Random', 'Decreasing', 'Small Spike', 'Large Spike']
+pattern = ['Random', 'Decreasing', 'Spike']
 
 
 def hyperparameter_optimization(x, y):
@@ -20,13 +23,12 @@ def hyperparameter_optimization(x, y):
         ('clf', KNeighborsClassifier()),
     ])
     parameters = {
-        'clf__n_neighbors': np.arange(1, 21, 2),
+        'clf__n_neighbors': np.arange(1, 51, 2),
         'clf__weights': ['uniform', 'distance'],
         'clf__algorithm': ['auto'],
-        'clf__leaf_size': np.arange(5, 35, 1),
+        'clf__leaf_size': np.arange(5, 65, 1),
         'clf__p': [1, 2],
-        'clf__p': [1, 2],
-        'select__score_func': [chi2],
+        'select__score_func': [mutual_info_classif],
         'select__k': ['all'],
     }
     stratified_fold = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
@@ -60,7 +62,7 @@ def make_prediction(p, m):
             features.loc[0, [stalk_time[time]]] = current_entry.price.values[0]
         features = features.fillna(-1)
 
-        print('The prediction for %s is the %s pattern.' % (i, pattern[int(m.predict(features)[0])]))
+        print('The prediction for %s is a %s pattern.' % (i, pattern[int(m.predict(features)[0])]))
 
 
 def prepare_data(pr, pat):
@@ -78,11 +80,19 @@ def prepare_data(pr, pat):
 
             features = dict(zip(stalk_time, user_prices))
 
+            if bool(random.getrandbits(1)):
+                for i in range(random.randrange(3,5)):
+                    features[random.choice(stalk_time)] = -1
+            else:
+                for t in stalk_time[random.randrange(6,9):]:
+                    features[t] = -1
+
             features = {**features, 'week': week, 'user': user}
 
             df_prices = df_prices.append(features, ignore_index=True)
 
-    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(method='backfill')
+    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(-1)
+
     del data['user'], data['week'], data['prices']
 
     return np.split(data, [12], axis=1)
@@ -99,7 +109,6 @@ if __name__ == '__main__':
     prices_samples_path = 'data/stalk_prices_samples.csv'
     patterns_samples_path = 'data/stalk_patterns_samples.csv'
     prices_path = 'data/stalk_prices.csv'
-
     if new_model:
         X_train, y_train = prepare_data(prices_samples_path, patterns_samples_path)
         model = hyperparameter_optimization(X_train, y_train)

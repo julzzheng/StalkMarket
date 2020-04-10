@@ -101,7 +101,7 @@ def generate_large_spike_sample(week, sunday_price, prices, patterns):
         else:
             price = ceil(random.uniform(0.4, 0.9) * sunday_price)
         prices = prices.append({'week': week, 'time': j, 'user': username, 'price': price}, ignore_index=True)
-    patterns = patterns.append({'week': week, 'user': username, 'class': 3}, ignore_index=True)
+    patterns = patterns.append({'week': week, 'user': username, 'class': 2}, ignore_index=True)
     return prices, patterns
 
 
