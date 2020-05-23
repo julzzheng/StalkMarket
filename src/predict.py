@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from argparse import ArgumentParser
 import datetime
@@ -11,13 +10,15 @@ import os
 import pickle
 import random
 
-stalk_time = ['mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm', 'fri_am',
-              'fri_pm', 'sat_am', 'sat_pm']
-# pattern = ['Random', 'Decreasing', 'Small Spike', 'Large Spike']
-pattern = ['Random', 'Decreasing', 'Spike']
+stalk_time = ['sun_am', 'sun_pm', 'mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm',
+              'fri_am', 'fri_pm', 'sat_am', 'sat_pm']
+pattern = ['Random', 'Decreasing', 'Small Spike', 'Large Spike']
 
 
-def hyperparameter_optimization(x, y):
+# pattern = ['Random', 'Decreasing', 'Spike']
+
+
+def hyperparameter_optimization(x, y, nj):
     pipeline = Pipeline([
         ('select', SelectKBest()),
         ('clf', KNeighborsClassifier()),
@@ -28,12 +29,12 @@ def hyperparameter_optimization(x, y):
         'clf__algorithm': ['auto'],
         'clf__leaf_size': np.arange(5, 65, 1),
         'clf__p': [1, 2],
-        'select__score_func': [mutual_info_classif],
+        'select__score_func': [chi2],
         'select__k': ['all'],
     }
     stratified_fold = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
 
-    random_search = RandomizedSearchCV(pipeline, parameters, scoring='balanced_accuracy', cv=stratified_fold, n_jobs=-1,
+    random_search = RandomizedSearchCV(pipeline, parameters, scoring='balanced_accuracy', cv=stratified_fold, n_jobs=nj,
                                        verbose=1)
     random_fit = random_search.fit(x, y.values.ravel())
     print("Best score: %0.8f" % random_fit.best_score_)
@@ -71,8 +72,9 @@ def prepare_data(pr, pat):
 
     df_prices = pd.DataFrame(columns=['week', 'user', 'prices'])
 
-    for week in prices.week.unique():
-        entries = prices[prices.week == week]
+    def prepare_data_by_week(wk):
+        lof = []
+        entries = prices[prices.week == wk]
         for user in entries.user.unique():
             user_entries = entries[entries.user == user]
 
@@ -81,27 +83,31 @@ def prepare_data(pr, pat):
             features = dict(zip(stalk_time, user_prices))
 
             if bool(random.getrandbits(1)):
-                for i in range(random.randrange(3,5)):
-                    features[random.choice(stalk_time)] = -1
+                for i in range(random.randrange(0, 5)):
+                    features[random.choice(stalk_time)] = 0
             else:
-                for t in stalk_time[random.randrange(6,9):]:
-                    features[t] = -1
+                for t in stalk_time[random.randrange(7, 9):]:
+                    features[t] = 0
 
-            features = {**features, 'week': week, 'user': user}
+            lof.append({**features, 'week': wk, 'user': user})
+        return lof
 
-            df_prices = df_prices.append(features, ignore_index=True)
+    priceList = [prepare_data_by_week(w) for w in prices.week.unique()]
+    df_prices = df_prices.append([price for sl in priceList for price in sl], ignore_index=True)
 
-    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(-1)
+    data = pd.merge(df_prices, patterns, on=['week', 'user']).fillna(0)
 
     del data['user'], data['week'], data['prices']
 
-    return np.split(data, [12], axis=1)
+    return np.split(data, [14], axis=1)
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--new_model", required=False, type=bool,
                         help="if a new model should be trained before the prediction", default=False)
+    parser.add_argument("--n_jobs", required=False, type=int,
+                        help="how many threads should be used for the classification task", default=-1)
     args = parser.parse_args()
 
     new_model = args.new_model or not os.path.isfile('model/estimator.pkl')
@@ -111,7 +117,7 @@ if __name__ == '__main__':
     prices_path = 'data/stalk_prices.csv'
     if new_model:
         X_train, y_train = prepare_data(prices_samples_path, patterns_samples_path)
-        model = hyperparameter_optimization(X_train, y_train)
+        model = hyperparameter_optimization(X_train, y_train, args.n_jobs)
         if not os.path.exists('model'):
             os.makedirs('model')
         pickle.dump(model, open('model/estimator.pkl', 'wb'))

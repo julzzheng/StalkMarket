@@ -10,6 +10,10 @@ Furthermore, the twitter user [@KnightCarmine](https://twitter.com/KnightCarmine
 
 Lastly, in [@_Ninji](https://twitter.com/_Ninji)'s tweet he showed in his [findings](https://twitter.com/_Ninji/status/1244818665851289602) the code responsible for the turnip prices.
 
+We use the k-nearest neighbor classifier from the Python library scikit-learn and try to predict the turnip pattern for the current week with the tracked data.
+
+For an accurate classification, all prices (including Sunday) should be recorded.
+
 <div style="text-align:center"><img src="https://pbs.twimg.com/media/EUT4ZTWVAAA7S9V?format=jpg" width="450">
 <img src="https://pbs.twimg.com/media/EUT4aS1UEAAz73u?format=jpg" width="450"></div>
 
@@ -38,9 +42,10 @@ python src/track.py --price=46 --time=mon_am --user=james
 
 Parameters:
 1. ``new_model``: whether a new model should be trained or not (optional)
+2. ``n_jobs``: number of jobs to run in parallel for the prediction task (optional)
 
 ````
-python src/predict.py --new_model=True
+python src/predict.py --new_model=True --n_jobs=-1
 ````
 
 ### Generate training data

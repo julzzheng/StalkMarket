@@ -4,8 +4,8 @@ import datetime
 import os
 from argparse import ArgumentParser
 
-stalk_time = ['mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm', 'fri_am', 'fri_pm',
-              'sat_am', 'sat_pm']
+stalk_time = ['sun_am', 'sun_pm', 'mon_am', 'mon_pm', 'tue_am', 'tue_pm', 'wed_am', 'wed_pm', 'thu_am', 'thu_pm',
+              'fri_am', 'fri_pm', 'sat_am', 'sat_pm']
 markers = ['s', 'o', 'v', '^', 'v', '.', 'p', '*', 'h', 'D']
 
 
@@ -24,9 +24,17 @@ def track_stalk(path, price, time, user):
             raise IOError('Entry already exists for given user and time.')
     except IOError as ex:
         print(ex)
+    if time == 'sun_am' or time == 'sun_pm':
+        current_week += 1
+        entry = [
+            {'week': current_week, 'time': stalk_time.index(time), 'user': user, 'price': price},
+            {'week': current_week, 'time': stalk_time.index(time) + 1, 'user': user, 'price': price}
+        ]
+    else:
+        entry = {'week': current_week, 'time': stalk_time.index(time), 'user': user, 'price': price}
 
-    file = file.append({'week': current_week, 'time': stalk_time.index(time), 'user': user, 'price': price},
-                       ignore_index=True)
+    file = file.append(entry, ignore_index=True)
+
     file.to_csv(path, index=False)
 
 
@@ -37,18 +45,21 @@ def plot_prices(path):
     entries = data[data.week == current_week]
     users = entries.user.unique().tolist()
 
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+
     for i in users:
         user_entries = entries[entries.user == i]
-        plt.plot(user_entries.time.tolist(), user_entries.price.tolist(), lw=2, label='{}'.format(i),
-                 marker=markers[users.index(i)])
+        ax.plot(user_entries.time.tolist(), user_entries.price.tolist(), lw=1, label='{}'.format(i),
+                marker=markers[users.index(i)])
 
-    plt.ylim(0, 700)
-    plt.xlim(0, 12)
-    plt.xticks(range(12), stalk_time, rotation=-45)
-    plt.xlabel("Timeframe")
-    plt.ylabel("Price")
-    plt.legend(loc="best")
-    plt.title("The Stalk Market for week %s" % current_week)
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 800)
+    ax.set_xticks(range(14))
+    ax.set_xticklabels(stalk_time, rotation=45)
+    ax.set_xlabel("Timeframe")
+    ax.set_ylabel("Price")
+    ax.legend(loc="best")
+    ax.set_title("The Stalk Market for week {}".format(current_week))
 
     plt.show()
 
